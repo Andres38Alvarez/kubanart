@@ -1,0 +1,61 @@
+{% extends 'zettels/base.html' %}
+
+{% block title %}Cuban Art Across — Digital Cultural Heritage{% endblock %}
+
+{% block content %}
+<div style="position: relative; padding: 96px 60px 72px; overflow: hidden;">
+  <!-- círculos decorativos con degradado, en el ánimo de las capturas de referencia -->
+  <div style="position: absolute; top: -60px; right: 10%; width: 200px; height: 200px; border-radius: 50%; background: linear-gradient(160deg, #000 0%, #d9a441 100%); opacity: 0.9; filter: blur(0.5px);"></div>
+  <div style="position: absolute; top: 90px; right: 22%; width: 260px; height: 260px; border-radius: 50%; background: linear-gradient(160deg, #8b3fae 0%, #ffd76e 100%); opacity: 0.85;"></div>
+  <div style="position: absolute; top: 260px; right: 8%; width: 220px; height: 220px; border-radius: 50%; background: linear-gradient(160deg, #0c1240 0%, #2b3fae 100%); opacity: 0.9;"></div>
+
+  <div style="position: relative; z-index: 1;">
+    <div class="eyebrow">Digital Humanities &middot; Digital Cultural Heritage</div>
+    <h1 style="font-size: 64px; line-height: 1.02; max-width: 14ch; letter-spacing: -0.01em;">Cuban Art<br>Across</h1>
+    <p style="font-size: 19px; line-height: 1.55; color: rgba(255,255,255,0.85); max-width: 44ch; margin: 24px 0 0; font-family: 'Public Sans', sans-serif;">
+      Circulation and reception of Cuban art. Collections, events and media &mdash;
+      {{ current_phase_label }}.
+    </p>
+    <a href="{% url 'zettels:map' %}" class="btn" style="margin-top: 32px;">Explore the map &rarr;</a>
+  </div>
+</div>
+
+<div class="wrap" style="padding-top: 0;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 56px;">
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">Artists</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 700;">{{ num_artists }}</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">Artworks</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 700;">{{ num_artworks }}</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">Museums &amp; collections</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 700;">{{ num_museums }}</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">Countries</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 700;">{{ num_countries }}</div>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+    <h2 style="font-size: 24px;">Recently added</h2>
+    <a href="{% url 'zettels:artwork_list' %}" class="muted">View all artworks &rarr;</a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+    {% for artwork in recent_artworks %}
+    {% cycle 'linear-gradient(160deg, #000 0%, #d9a441 100%)' 'linear-gradient(160deg, #8b3fae 0%, #ffd76e 100%)' 'linear-gradient(160deg, #0c1240 0%, #2b3fae 100%)' as card_bg silent %}
+    <a href="{% url 'zettels:artwork_detail' artwork.pk %}" style="display: block; border-radius: 12px; padding: 20px; background: {{ card_bg }}; color: #fff; min-height: 120px;">
+      <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 6px;">{{ artwork.title }}</div>
+      <div style="font-size: 13px; opacity: 0.9;">{{ artwork.artist.name }}{% if artwork.year %} &middot; {{ artwork.year }}{% endif %}</div>
+      {% if artwork.museum %}<div style="font-size: 12px; opacity: 0.75; margin-top: 4px;">{{ artwork.museum.name }}, {{ artwork.museum.city }}</div>{% endif %}
+    </a>
+    {% empty %}
+    <div class="card">No artworks yet &mdash; run <code>import_artist --reset</code> to load the seed CSV.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

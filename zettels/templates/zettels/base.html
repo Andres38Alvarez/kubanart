@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Cuban Art Across{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #fdf3ee; font-family: 'Public Sans', sans-serif;
+    background-color: #2a0a10;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(120, 45, 130, 0.45), transparent 55%),
+      radial-gradient(circle at 85% 15%, rgba(40, 30, 130, 0.30), transparent 50%),
+      linear-gradient(180deg, #2a0a10 0%, #6e1620 45%, #c81e3a 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  a { color: #ffd7a8; text-decoration: none; }
+  a:hover { color: #ffffff; }
+
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 60px; background: #8a6b6c;
+    flex-wrap: wrap; gap: 14px;
+  }
+  .nav .brand-group { display: flex; align-items: center; gap: 10px; }
+  .nav .brand {
+    font-family: 'Space Mono', monospace; font-size: 20px; font-weight: 700;
+    color: #fff; letter-spacing: .04em;
+  }
+  .nav .links {
+    display: flex; gap: 30px; font-family: 'Space Mono', monospace; font-size: 12px;
+    font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #f3e4e2;
+  }
+  .nav .links a { color: #f3e4e2; }
+  .nav .links a:hover, .nav .links a.active { color: #ffd76e; }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 60px; position: relative; z-index: 1; }
+
+  footer {
+    padding: 24px 60px; font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.55);
+    display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.15);
+    margin-top: 40px; flex-wrap: wrap; gap: 8px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 14px; padding: 20px 24px; backdrop-filter: blur(2px);
+  }
+
+  table.table { width: 100%; border-collapse: collapse; }
+  table.table th, table.table td {
+    text-align: left; padding: 10px 4px; border-bottom: 1px solid rgba(255,255,255,0.14);
+    font-size: 14px; vertical-align: top; color: #fdf3ee;
+  }
+  table.table th { color: rgba(255,255,255,0.6); font-weight: 600; width: 180px; }
+
+  .btn {
+    display: inline-block; padding: 12px 22px; border-radius: 4px; border: 1px solid #ffd76e;
+    color: #ffd76e; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .btn:hover { background: #ffd76e; color: #2a0a10; }
+
+  .list { list-style: none; padding: 0; margin: 0; }
+  .list li {
+    padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.14);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .list li:last-child { border-bottom: none; }
+  .list a.title { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 500; color: #fff; }
+  .list a.title:hover { color: #ffd76e; }
+
+  .muted { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .eyebrow {
+    font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .16em;
+    text-transform: uppercase; color: #ffb199; margin-bottom: 10px;
+  }
+  h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; margin: 0 0 16px; color: #fff; }
+  .back-link { font-size: 13px; color: rgba(255,255,255,0.65); display: inline-block; margin-bottom: 16px; }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="nav">
+  <div class="brand-group">
+    <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
+      <polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+      <polygon points="20,10 30,25 10,25" fill="#c81e3a"/>
+      <polygon points="12,28 28,28 20,15" fill="#2b3fae" opacity="0.9"/>
+    </svg>
+    <a class="brand" href="{% url 'zettels:home' %}">Cuban Art Across</a>
+  </div>
+  <div class="links">
+    <a href="{% url 'zettels:home' %}"{% if request.resolver_match.url_name == 'home' %} class="active"{% endif %}>Home</a>
+    <a href="{% url 'zettels:map' %}"{% if request.resolver_match.url_name == 'map' %} class="active"{% endif %}>Map</a>
+    <a href="{% url 'zettels:artist_list' %}"{% if request.resolver_match.url_name == 'artist_list' or request.resolver_match.url_name == 'artist_detail' %} class="active"{% endif %}>Artists</a>
+    <a href="{% url 'zettels:artwork_list' %}"{% if request.resolver_match.url_name == 'artwork_list' or request.resolver_match.url_name == 'artwork_detail' %} class="active"{% endif %}>Artworks</a>
+    <a href="{% url 'zettels:media' %}"{% if request.resolver_match.url_name == 'media' %} class="active"{% endif %}>Media</a>
+  </div>
+</div>
+
+{% block content %}{% endblock %}
+
+<footer>
+  <span>Cuban Art Across &mdash; {{ current_phase_label }}</span>
+  <span>Digital Cultural Heritage</span>
+</footer>
+</body>
+</html>

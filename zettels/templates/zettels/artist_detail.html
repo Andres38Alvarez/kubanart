@@ -1,0 +1,36 @@
+{% extends 'zettels/base.html' %}
+
+{% block title %}{{ artist.name }} — Cuban Art Across{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <a href="{% url 'zettels:artist_list' %}" class="back-link">&larr; Back to artists</a>
+  <div class="eyebrow">Artist</div>
+  <h1>{{ artist.name }}</h1>
+
+  <div class="card" style="margin-bottom: 32px;">
+    <table class="table">
+      <tr><th>Birthplace</th><td>{{ artist.birthplace|default:"—" }}</td></tr>
+      <tr><th>Born</th><td>{{ artist.birth_year|default:"—" }}</td></tr>
+      <tr><th>Died</th><td>{{ artist.death_year|default:"—" }}</td></tr>
+      <tr><th>Artworks in the archive</th><td>{{ artist.artworks.count }}</td></tr>
+    </table>
+  </div>
+
+  <h2 style="font-size: 20px;">Artworks</h2>
+  <div class="card">
+    <ul class="list">
+      {% for artwork in artist.artworks.all %}
+      <li>
+        <a class="title" href="{% url 'zettels:artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
+        <span class="muted">
+          {{ artwork.year|default:"" }}{% if artwork.museum %} &middot; {{ artwork.museum.name }}{% endif %}
+        </span>
+      </li>
+      {% empty %}
+      <li>No artworks registered for this artist.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

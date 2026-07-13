@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obras de artistas cubanos en colecciones europeas</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, -apple-system, sans-serif; }
+  #map { height: 100vh; width: 100%; }
+  .banner {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000;
+    background: #fff8dd; border: 1px solid #e0c26b; padding: 6px 14px; border-radius: 8px;
+    font-size: 13px; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .leaflet-popup-content { font-size: 13px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="banner">Datos de ejemplo — reemplaza <code>data/artworks.geojson</code> con tu información real</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([48, 10], 4);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    subdomains: 'abcd',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  fetch('data/artworks.geojson')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      L.geoJSON(data, {
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 7,
+            fillColor: '#2e6fb0',
+            color: '#fff',
+            weight: 1,
+            fillOpacity: 0.9
+          });
+        },
+        onEachFeature: function (feature, layer) {
+          const p = feature.properties;
+          const source = p.source
+            ? '<br><a href="' + p.source + '" target="_blank" rel="noopener">Fuente</a>'
+            : '';
+          layer.bindPopup(
+            '<strong>' + p.title + '</strong><br>' +
+            p.artist + (p.year ? ' (' + p.year + ')' : '') + '<br>' +
+            (p.medium ? p.medium + '<br>' : '') +
+            p.institution + ', ' + p.city + ', ' + p.country +
+            source
+          );
+        }
+      }).addTo(map);
+    })
+    .catch(function (err) { console.error('No se pudo cargar data/artworks.geojson', err); });
+</script>
+</body>
+</html>

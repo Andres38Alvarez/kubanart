@@ -1,0 +1,22 @@
+{% extends 'zettels/base.html' %}
+
+{% block title %}Artists — Cuban Art Across{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <div class="eyebrow">Directory</div>
+  <h1>Artists</h1>
+  <div class="card">
+    <ul class="list">
+      {% for artist in artist %}
+      <li>
+        <a class="title" href="{% url 'zettels:artist_detail' artist.pk %}">{{ artist.name }}</a>
+        <span class="muted">{{ artist.birthplace|default:"" }}</span>
+      </li>
+      {% empty %}
+      <li>No artists registered yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

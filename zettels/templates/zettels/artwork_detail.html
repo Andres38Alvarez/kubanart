@@ -1,0 +1,44 @@
+{% extends 'zettels/base.html' %}
+
+{% block title %}{{ artwork.title }} — Cuban Art Across{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <a href="{% url 'zettels:artwork_list' %}" class="back-link">&larr; Back to artworks</a>
+  <div class="eyebrow">Artwork</div>
+  <h1>{{ artwork.title }}</h1>
+
+  <div class="card" style="margin-bottom: 24px;">
+    <table class="table">
+      <tr><th>Artist</th><td><a href="{% url 'zettels:artist_detail' artwork.artist.pk %}">{{ artwork.artist.name }}</a></td></tr>
+      <tr><th>Year</th><td>{{ artwork.year|default:"—" }}</td></tr>
+      <tr><th>Medium</th><td>{{ artwork.medium|default:"—" }}</td></tr>
+      <tr><th>Dimensions</th><td>{{ artwork.dimensions|default:"—" }}</td></tr>
+      <tr>
+        <th>Collection</th>
+        <td>
+          {% if artwork.museum %}{{ artwork.museum.name }}, {{ artwork.museum.city }}, {{ artwork.museum.country }}{% else %}—{% endif %}
+        </td>
+      </tr>
+      <tr><th>Image rights</th><td>{{ artwork.image_rights|default:"—" }}</td></tr>
+      {% if artwork.museum_catalogue_url %}
+      <tr><th>Catalogue entry</th><td><a href="{{ artwork.museum_catalogue_url }}" target="_blank" rel="noopener">{{ artwork.museum_catalogue_url }}</a></td></tr>
+      {% endif %}
+    </table>
+  </div>
+
+  {% if artwork.description %}
+  <h2 style="font-size: 18px;">Description</h2>
+  <p style="color: rgba(255,255,255,0.85);">{{ artwork.description }}</p>
+  {% endif %}
+
+  {% if artwork.notes %}
+  <h2 style="font-size: 18px;">Notes</h2>
+  <p class="muted" style="white-space: pre-line;">{{ artwork.notes }}</p>
+  {% endif %}
+
+  {% if artwork.museum.latitude %}
+  <a href="{% url 'zettels:map' %}?focus={{ artwork.pk }}" class="btn" style="margin-top: 12px;">See on map</a>
+  {% endif %}
+</div>
+{% endblock %}

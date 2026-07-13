@@ -1,0 +1,80 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [2.3522, 48.8606] },
+      "properties": {
+        "artist": "Wifredo Lam",
+        "title": "Obra de ejemplo — reemplazar",
+        "year": "1943",
+        "medium": "Óleo sobre lienzo",
+        "institution": "Centre Pompidou",
+        "city": "París",
+        "country": "Francia",
+        "source": "",
+        "placeholder": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-3.6944, 40.4085] },
+      "properties": {
+        "artist": "Amelia Peláez",
+        "title": "Obra de ejemplo — reemplazar",
+        "year": "1955",
+        "medium": "Óleo sobre lienzo",
+        "institution": "Museo Reina Sofía",
+        "city": "Madrid",
+        "country": "España",
+        "source": "",
+        "placeholder": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.0994, 51.5076] },
+      "properties": {
+        "artist": "Agustín Fernández",
+        "title": "Obra de ejemplo — reemplazar",
+        "year": "1968",
+        "medium": "Técnica mixta",
+        "institution": "Tate Modern",
+        "city": "Londres",
+        "country": "Reino Unido",
+        "source": "",
+        "placeholder": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.8790, 52.3579] },
+      "properties": {
+        "artist": "Roberto Diago",
+        "title": "Obra de ejemplo — reemplazar",
+        "year": "2001",
+        "medium": "Instalación",
+        "institution": "Stedelijk Museum",
+        "city": "Ámsterdam",
+        "country": "Países Bajos",
+        "source": "",
+        "placeholder": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [6.9603, 50.9413] },
+      "properties": {
+        "artist": "Carmen Herrera",
+        "title": "Obra de ejemplo — reemplazar",
+        "year": "1972",
+        "medium": "Acrílico sobre lienzo",
+        "institution": "Museum Ludwig",
+        "city": "Colonia",
+        "country": "Alemania",
+        "source": "",
+        "placeholder": true
+      }
+    }
+  ]
+}

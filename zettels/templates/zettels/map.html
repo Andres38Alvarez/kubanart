@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuban Art Across — Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Public+Sans:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; font-family: 'Public Sans', system-ui, sans-serif; }
+  #map { height: 100vh; width: 100%; }
+  .topbar {
+    position: absolute; top: 16px; left: 16px; z-index: 1000;
+    background: #8a6b6c; padding: 12px 20px; border-radius: 8px;
+    font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    display: flex; align-items: center; gap: 24px;
+  }
+  .topbar .brand { font-family: 'Space Mono', monospace; font-weight: 700; color: #fff; letter-spacing: .03em; }
+  .topbar a { color: #f3e4e2; text-decoration: none; font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+  .topbar a:hover { color: #ffd76e; }
+  .leaflet-popup-content { font-size: 13px; line-height: 1.5; font-family: 'Public Sans', sans-serif; }
+
+  .region-filter {
+    position: absolute; top: 76px; left: 16px; z-index: 1000;
+    background: rgba(138, 107, 108, 0.95); padding: 10px 14px; border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: 90vw;
+  }
+  .region-filter button {
+    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em; color: #f3e4e2;
+    background: transparent; border: 1px solid rgba(243, 228, 226, 0.5);
+    border-radius: 20px; padding: 6px 14px; cursor: pointer;
+  }
+  .region-filter button:hover { border-color: #ffd76e; color: #ffd76e; }
+  .region-filter button.active { background: #ffd76e; border-color: #ffd76e; color: #2a0a10; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="{% url 'zettels:home' %}">Cuban Art Across</a>
+  <a href="{% url 'zettels:artist_list' %}">Artists</a>
+  <a href="{% url 'zettels:artwork_list' %}">Artworks</a>
+  <a href="{% url 'zettels:media' %}">Media</a>
+</div>
+<div class="region-filter" id="regionFilter"></div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([48, 10], 4);
+
+  // tile.openstreetmap.org exige header Referer y bloquea con 403 muchas
+  // apps en desarrollo. CARTO sirve los mismos datos de OSM sin esa
+  // restricción y es gratis para uso moderado.
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    subdomains: 'abcd',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  const params = new URLSearchParams(window.location.search);
+  const focusId = params.get('focus');
+  let focusLayer = null;
+
+  const REGION_LABELS = {
+    europe: 'Europe',
+    north_america: 'North America',
+    latin_america: 'Latin America',
+    asia: 'Asia',
+    africa: 'Africa',
+    other: 'Other'
+  };
+
+  let currentLayer = null;
+  let activeRegion = 'all';
+
+  function markerLayer(feature, latlng) {
+    return L.circleMarker(latlng, {
+      radius: 7,
+      fillColor: '#c81e3a',
+      color: '#fff',
+      weight: 1,
+      fillOpacity: 0.9
+    });
+  }
+
+  function bindPopupAndFocus(feature, layer) {
+    const p = feature.properties;
+    layer.bindPopup(
+      '<strong>' + p.title + '</strong><br>' +
+      p.artist + (p.year ? ' (' + p.year + ')' : '') + '<br>' +
+      (p.medium ? p.medium + '<br>' : '') +
+      p.institution + ', ' + p.city + ', ' + p.country +
+      '<br><a href="' + p.detail_url + '">Ver ficha completa</a>'
+    );
+    if (focusId && p.detail_url && p.detail_url.indexOf('/' + focusId + '/') !== -1) {
+      focusLayer = layer;
+    }
+  }
+
+  function renderLayer(data, region) {
+    if (currentLayer) {
+      map.removeLayer(currentLayer);
+    }
+    currentLayer = L.geoJSON(data, {
+      filter: function (feature) {
+        if (region === 'all') return true;
+        return (feature.properties.region || 'other') === region;
+      },
+      pointToLayer: markerLayer,
+      onEachFeature: bindPopupAndFocus
+    }).addTo(map);
+
+    if (currentLayer.getBounds().isValid()) {
+      map.fitBounds(currentLayer.getBounds(), { padding: [40, 40], maxZoom: 8 });
+    }
+    if (focusLayer) {
+      map.setView(focusLayer.getLatLng(), 12);
+      focusLayer.openPopup();
+    }
+  }
+
+  function buildFilterButtons(data) {
+    const el = document.getElementById('regionFilter');
+    const regionsPresent = new Set();
+    data.features.forEach(function (f) {
+      regionsPresent.add(f.properties.region || 'other');
+    });
+    if (regionsPresent.size <= 1) {
+      el.style.display = 'none';
+      return;
+    }
+
+    const allBtn = document.createElement('button');
+    allBtn.textContent = 'All';
+    allBtn.className = 'active';
+    allBtn.addEventListener('click', function () { selectRegion('all', data); });
+    el.appendChild(allBtn);
+
+    Array.from(regionsPresent).sort().forEach(function (region) {
+      const btn = document.createElement('button');
+      btn.textContent = REGION_LABELS[region] || region;
+      btn.dataset.region = region;
+      btn.addEventListener('click', function () { selectRegion(region, data); });
+      el.appendChild(btn);
+    });
+  }
+
+  function selectRegion(region, data) {
+    activeRegion = region;
+    document.querySelectorAll('#regionFilter button').forEach(function (btn) {
+      const btnRegion = btn.dataset.region || 'all';
+      btn.classList.toggle('active', btnRegion === region);
+    });
+    renderLayer(data, region);
+  }
+
+  fetch("{% url 'zettels:artworks_geojson' %}")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      buildFilterButtons(data);
+      renderLayer(data, 'all');
+    })
+    .catch(function (err) { console.error('No se pudo cargar el GeoJSON', err); });
+</script>
+</body>
+</html>

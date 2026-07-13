@@ -1,0 +1,24 @@
+{% extends 'zettels/base.html' %}
+
+{% block title %}Artworks — Cuban Art Across{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <div class="eyebrow">Archive</div>
+  <h1>Artworks</h1>
+  <div class="card">
+    <ul class="list">
+      {% for artwork in artworks %}
+      <li>
+        <a class="title" href="{% url 'zettels:artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
+        <span class="muted">
+          {{ artwork.artist.name }}{% if artwork.museum %} &middot; {{ artwork.museum.name }}, {{ artwork.museum.city }}{% endif %}
+        </span>
+      </li>
+      {% empty %}
+      <li>No artworks registered yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
