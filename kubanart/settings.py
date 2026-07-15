@@ -24,12 +24,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tiqbnp)9ngr8(f@)(%f4ul)128l3y8dw2oum8d6oq$9-l%(6)n'
+# En local, si no hay SECRET_KEY en el .env, se usa el valor de desarrollo
+# de abajo. En producción (Render, etc.) SIEMPRE se define por variable de
+# entorno — nunca subas al repo la clave real de producción.
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-tiqbnp)9ngr8(f@)(%f4ul)128l3y8dw2oum8d6oq$9-l%(6)n',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Por defecto False (seguro); en tu .env local pon DJANGO_DEBUG=True.
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()
+]
+
+# Render inyecta esta variable automáticamente con el hostname público
+# (algo-así.onrender.com) — la agregamos sola para no tener que copiarla
+# a mano cada vez que Render cambia el nombre del servicio.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}']
 
 
 # Application definition
@@ -46,6 +63,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Sirve los archivos estáticos directamente desde gunicorn en producción,
+    # sin necesitar un servidor/CDN aparte (Nginx, S3, etc.).
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,11 +98,20 @@ WSGI_APPLICATION = 'kubanart.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 #
-# Si el .env define DB_NAME, usamos Postgres. Si no existe (o falta esa
-# variable), caemos a sqlite automáticamente para no bloquear el desarrollo
-# local mientras se termina de configurar Postgres.
+# Tres formas de configurar la base, en este orden de prioridad:
+#   1. DATABASE_URL (una sola variable) — así es como Render y Railway
+#      entregan la conexión a su Postgres administrado.
+#   2. DB_NAME/DB_USER/... por separado — para Postgres configurado a mano.
+#   3. Si no hay ninguna de las dos, sqlite local (desarrollo).
 
-if os.environ.get('DB_NAME'):
+if os.environ.get('DATABASE_URL'):
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ['DATABASE_URL'], conn_max_age=600, ssl_require=True,
+        )
+    }
+elif os.environ.get('DB_NAME'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -137,6 +166,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Carpeta donde `collectstatic` reúne todos los archivos estáticos para
+# producción. Whitenoise los sirve directamente desde ahí (sin Nginx/S3).
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # Evita el warning W042 y mantiene consistencia con el 0001_initial ya
 # aplicado (que usaba BigAutoField para los IDs existentes).

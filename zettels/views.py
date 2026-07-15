@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views.generic import ListView, DetailView, TemplateView
-from .models import Artist, Artwork, Museum
+from .models import Artist, Artwork, Museum, PressMention, Publication
 
 
 class HomeView(TemplateView):
@@ -49,38 +49,65 @@ class MapView(TemplateView):
 class MediaView(TemplateView):
     template_name = 'zettels/media.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['mentions'] = (
+            PressMention.objects
+            .select_related('publication')
+            .prefetch_related('artists')
+            .all()
+        )
+        context['num_mentions'] = context['mentions'].count()
+        context['num_publications'] = Publication.objects.count()
+        context['num_cuba_diaspora'] = (
+            PressMention.objects.filter(publication__origin=Publication.Origin.CUBA_DIASPORA).count()
+        )
+        context['num_international'] = (
+            PressMention.objects.filter(publication__origin=Publication.Origin.INTERNATIONAL).count()
+        )
+        return context
+
 
 def artworks_geojson(request):
     """
-    Un punto por obra, usando las coordenadas de su museo. Varias obras del
-    mismo museo caen en el mismo punto -a propósito- y el popup enlaza a la
-    ficha completa de cada una (el "mini-portafolio").
+    Un punto por museo (no por obra): varias obras del mismo museo comparten
+    coordenadas, así que agruparlas evita que los marcadores se apilen
+    exactamente unos sobre otros y solo el de arriba responda al click. El
+    popup de cada museo lista todas sus obras, cada una enlazando a su ficha
+    completa (el "mini-portafolio").
     """
     qs = (
         Artwork.objects
         .select_related('artist', 'museum')
         .filter(museum__latitude__isnull=False, museum__longitude__isnull=False)
+        .order_by('museum_id', 'artist__name', 'title')
     )
 
-    features = []
+    museums = {}
     for artwork in qs:
-        features.append({
-            'type': 'Feature',
-            'geometry': {
-                'type': 'Point',
-                'coordinates': [artwork.museum.longitude, artwork.museum.latitude],
-            },
-            'properties': {
-                'artist': artwork.artist.name,
-                'title': artwork.title,
-                'year': artwork.year,
-                'medium': artwork.medium,
-                'institution': artwork.museum.name,
-                'city': artwork.museum.city,
-                'country': artwork.museum.country,
-                'region': artwork.museum.region,
-                'detail_url': reverse('zettels:artwork_detail', args=[artwork.pk]),
-            },
+        museum = artwork.museum
+        if museum.id not in museums:
+            museums[museum.id] = {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [museum.longitude, museum.latitude],
+                },
+                'properties': {
+                    'institution': museum.name,
+                    'city': museum.city,
+                    'country': museum.country,
+                    'region': museum.region,
+                    'artworks': [],
+                },
+            }
+        museums[museum.id]['properties']['artworks'].append({
+            'id': artwork.pk,
+            'artist': artwork.artist.name,
+            'title': artwork.title,
+            'year': artwork.year,
+            'medium': artwork.medium,
+            'detail_url': reverse('zettels:artwork_detail', args=[artwork.pk]),
         })
 
-    return JsonResponse({'type': 'FeatureCollection', 'features': features})
+    return JsonResponse({'type': 'FeatureCollection', 'features': list(museums.values())})

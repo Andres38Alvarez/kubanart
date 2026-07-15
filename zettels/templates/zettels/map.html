@@ -21,6 +21,13 @@
   .topbar a { color: #f3e4e2; text-decoration: none; font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
   .topbar a:hover { color: #ffd76e; }
   .leaflet-popup-content { font-size: 13px; line-height: 1.5; font-family: 'Public Sans', sans-serif; }
+  .popup-museum { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+  .popup-artworks { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+  .popup-artworks li { padding: 6px 0; border-top: 1px solid rgba(0,0,0,0.1); }
+  .popup-artworks li:first-child { border-top: none; }
+  .popup-artworks li.focused { background: rgba(200, 30, 58, 0.08); }
+  .popup-artworks a { font-weight: 700; }
+  .popup-artworks .meta { display: block; color: #666; font-size: 12px; }
 
   .region-filter {
     position: absolute; top: 76px; left: 16px; z-index: 1000;
@@ -78,8 +85,12 @@
   let activeRegion = 'all';
 
   function markerLayer(feature, latlng) {
+    const n = (feature.properties.artworks || []).length;
+    // Marcador un poco más grande cuando el museo tiene varias obras,
+    // para dar una pista visual de que hay más de una ficha adentro.
+    const radius = Math.min(7 + Math.floor(n / 3), 14);
     return L.circleMarker(latlng, {
-      radius: 7,
+      radius: radius,
       fillColor: '#c81e3a',
       color: '#fff',
       weight: 1,
@@ -89,14 +100,26 @@
 
   function bindPopupAndFocus(feature, layer) {
     const p = feature.properties;
-    layer.bindPopup(
-      '<strong>' + p.title + '</strong><br>' +
-      p.artist + (p.year ? ' (' + p.year + ')' : '') + '<br>' +
-      (p.medium ? p.medium + '<br>' : '') +
-      p.institution + ', ' + p.city + ', ' + p.country +
-      '<br><a href="' + p.detail_url + '">Ver ficha completa</a>'
-    );
-    if (focusId && p.detail_url && p.detail_url.indexOf('/' + focusId + '/') !== -1) {
+    const artworks = p.artworks || [];
+
+    const items = artworks.map(function (a) {
+      const isFocused = focusId && String(a.id) === String(focusId);
+      return (
+        '<li' + (isFocused ? ' class="focused"' : '') + '>' +
+        '<a href="' + a.detail_url + '">' + a.title + '</a>' +
+        '<span class="meta">' + a.artist + (a.year ? ' &middot; ' + a.year : '') +
+        (a.medium ? ' &middot; ' + a.medium : '') + '</span>' +
+        '</li>'
+      );
+    }).join('');
+
+    const html =
+      '<div class="popup-museum">' + p.institution + ' &mdash; ' + p.city + ', ' + p.country + '</div>' +
+      '<ul class="popup-artworks">' + items + '</ul>';
+
+    layer.bindPopup(html, { maxWidth: 280 });
+
+    if (focusId && artworks.some(function (a) { return String(a.id) === String(focusId); })) {
       focusLayer = layer;
     }
   }

@@ -2,17 +2,113 @@
 
 {% block title %}Media — Cuban Art Across{% endblock %}
 
+{% block extra_head %}
+<style>
+  .origin-filter {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .origin-filter button {
+    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em; color: #f3e4e2;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(243, 228, 226, 0.4);
+    border-radius: 20px; padding: 7px 16px; cursor: pointer;
+  }
+  .origin-filter button:hover { border-color: #ffd76e; color: #ffd76e; }
+  .origin-filter button.active { background: #ffd76e; border-color: #ffd76e; color: #2a0a10; }
+  .mention-item { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.14); }
+  .mention-item:last-child { border-bottom: none; }
+  .mention-item .pub-line {
+    font-family: 'Space Mono', monospace; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .06em; color: #ffb199; margin-bottom: 4px;
+  }
+  .mention-item .origin-tag {
+    display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; letter-spacing: .04em;
+  }
+  .origin-tag.cuba_diaspora { background: rgba(255, 215, 118, 0.18); color: #ffd76e; }
+  .origin-tag.international { background: rgba(43, 63, 174, 0.25); color: #b9c4ff; }
+  .mention-item a.mention-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 500; color: #fff; }
+  .mention-item a.mention-title:hover { color: #ffd76e; }
+  .mention-item .mention-meta { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="wrap">
   <div class="eyebrow">Media</div>
   <h1>Press &amp; resources</h1>
-  <p style="color: rgba(255,255,255,0.85); max-width: 60ch; margin-bottom: 32px;">
-    This section will hold press mentions, essays and external resources about the
-    project as they appear. For now, here are the public collection sources this
-    archive draws on.
+  <p style="color: rgba(255,255,255,0.85); max-width: 60ch; margin-bottom: 24px;">
+    A running record of specialized press covering the artists in this archive &mdash;
+    both international outlets and Cuba/diaspora media, tracked separately so
+    circulation inside and outside the island can be compared over time.
   </p>
 
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 32px;">
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">Mentions</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700;">{{ num_mentions }}</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">Publications</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700;">{{ num_publications }}</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">Cuba / Diaspora</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700;">{{ num_cuba_diaspora }}</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom: 4px;">International</div>
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700;">{{ num_international }}</div>
+    </div>
+  </div>
+
   <div class="card" style="margin-bottom: 24px;">
+    <h2 style="font-size: 18px;">Press mentions</h2>
+
+    {% if mentions %}
+    <div class="origin-filter" id="originFilter">
+      <button class="active" data-origin="all">All</button>
+      <button data-origin="international">International</button>
+      <button data-origin="cuba_diaspora">Cuba / Diaspora</button>
+    </div>
+
+    <div id="mentionsList">
+      {% for mention in mentions %}
+      <div class="mention-item" data-origin="{{ mention.publication.origin }}">
+        <div class="pub-line">
+          {{ mention.publication.name }}{% if mention.published_year %} &middot; {{ mention.published_year }}{% endif %}
+          <span class="origin-tag {{ mention.publication.origin }}">
+            {% if mention.publication.origin == 'cuba_diaspora' %}Cuba / Diaspora{% else %}International{% endif %}
+          </span>
+        </div>
+        <a class="mention-title" href="{{ mention.url }}" target="_blank" rel="noopener">{{ mention.title }}</a>
+        <div class="mention-meta">
+          {% for artist in mention.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          {% if mention.publication.country %} &middot; {{ mention.publication.country }}{% endif %}
+          {% if mention.notes %} &middot; {{ mention.notes }}{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <script>
+      document.querySelectorAll('#originFilter button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('#originFilter button').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          const origin = btn.dataset.origin;
+          document.querySelectorAll('#mentionsList .mention-item').forEach(function (item) {
+            item.style.display = (origin === 'all' || item.dataset.origin === origin) ? '' : 'none';
+          });
+        });
+      });
+    </script>
+    {% else %}
+    <p class="muted">Nothing tracked yet &mdash; check back as the project develops.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
     <h2 style="font-size: 18px;">Sources &amp; institutions</h2>
     <ul class="list">
       <li>
@@ -27,12 +123,11 @@
         <span>Centre Pompidou</span>
         <a href="https://www.centrepompidou.fr/en/collection" target="_blank" rel="noopener" class="muted">centrepompidou.fr &rarr;</a>
       </li>
+      <li>
+        <span>Pérez Art Museum Miami</span>
+        <a href="https://www.pamm.org/en/collection/" target="_blank" rel="noopener" class="muted">pamm.org &rarr;</a>
+      </li>
     </ul>
-  </div>
-
-  <div class="card">
-    <h2 style="font-size: 18px;">Press mentions</h2>
-    <p class="muted">Nothing published yet &mdash; check back as the project develops.</p>
   </div>
 </div>
 {% endblock %}
